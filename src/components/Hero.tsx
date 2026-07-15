@@ -1,0 +1,254 @@
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
+
+const ProfileSphere = lazy(() => import('./ProfileSphere'));
+
+const BIOS = [
+  'Specializing in <strong>Java, Spring Boot, and React</strong>. Merging enterprise backend architecture with modern full-stack engineering.',
+  'Building <strong>full-stack systems</strong> that don\'t just run — they <strong>scale, secure, and perform</strong>. From REST APIs to AI-powered features.',
+  'From <strong>rapid prototypes to production deployments</strong>. Passionate about bridging backend engineering with AI-driven applications.',
+  'Currently a <strong>Software Developer at Info Way Solutions</strong> (Feb 2026–Present), delivering full-stack apps that serve <strong>100,000+ active users with 99.9% uptime</strong>.',
+  'Engineered <strong>25+ RESTful APIs</strong> with Spring Boot, achieving a <strong>40% improvement in response times</strong> through PostgreSQL optimization and Redis caching.',
+  'Creator of <strong>PolicyPilotAI</strong>, an insurance RAG chatbot built with LangChain, FAISS, and Groq Llama 3 for <strong>context-aware semantic search</strong>.',
+  'Frontend Developer turned Full-Stack Engineer. Automated CI/CD pipelines at Pursuit Future Technology, cutting deployment time by <strong>87% — from 2 hours to 15 minutes</strong>.',
+  'Built <strong>Fitflow</strong>, an AI-driven fitness platform using TensorFlow.js, Mediapipe, and OpenCV for <strong>real-time pose estimation and automatic rep counting</strong>.',
+  '<strong>Capgemini Certified Developer</strong> (TNSIF Java Full Stack, 2026), with additional certifications in Web Development (Academor) and Java Full Stack Foundation (Edusphere).',
+  'Developed <strong>10xCoders</strong>, a full-stack e-learning platform with JWT authentication, CRUD operations, and an <strong>AI-powered career guidance chatbot</strong>.',
+  'B.Tech Electronics and Communication Engineering student at <strong>Manakula Vinayagar Institute of Technology</strong>, blending core engineering fundamentals with modern software development.',
+  'From <strong>Redis caching to computer vision pipelines</strong>. I bridge backend reliability with AI-driven features across the full stack.',
+];
+
+export default function Hero() {
+  const bioRef = useRef<HTMLParagraphElement>(null);
+  const [currentBioIndex, setCurrentBioIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+  const [displayedText, setDisplayedText] = useState('');
+  const animationRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const typeWriter = (html: string, speed = 25) => {
+    setIsTyping(true);
+    setDisplayedText('');
+    let i = 0;
+    const stripped = html.replace(/<[^>]+>/g, '');
+    const tick = () => {
+      if (i <= stripped.length) {
+        setDisplayedText(stripped.slice(0, i));
+        i++;
+        animationRef.current = setTimeout(tick, speed);
+      } else {
+        // After plain text animation show rich html
+        setDisplayedText(html);
+        setIsTyping(false);
+      }
+    };
+    tick();
+  };
+
+  useEffect(() => {
+    typeWriter(BIOS[0]);
+    return () => {
+      if (animationRef.current) clearTimeout(animationRef.current);
+    };
+  }, []);
+
+  const generateNewBio = () => {
+    if (isTyping) return;
+    if (animationRef.current) clearTimeout(animationRef.current);
+    const next = (currentBioIndex + 1) % BIOS.length;
+    setCurrentBioIndex(next);
+    typeWriter(BIOS[next]);
+  };
+
+
+
+  return (
+    <section
+      id="home"
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
+      style={{ paddingTop: '4rem' }}
+    >
+      {/* 3D Sphere - positioned behind profile pic area */}
+      <Suspense fallback={null}>
+        <ProfileSphere />
+      </Suspense>
+
+      {/* SYSTEM ONLINE badge */}
+      <div
+        className="inline-block px-3 py-1 mb-6 text-xs font-bold tracking-widest text-cyan-400 border border-cyan-500/30 rounded-full bg-cyan-500/10 animate-pulse"
+        style={{ fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.15em', zIndex: 2, position: 'relative' }}
+      >
+        SYSTEM ONLINE
+      </div>
+
+      {/* Profile picture - no glow, clean border */}
+      <div className="relative flex items-center justify-center mb-6" style={{ zIndex: 2 }}>
+          <img
+            src="/kunal1.png"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src =
+                'https://ui-avatars.com/api/?name=Kunal+S&background=0D8ABC&color=fff&size=256';
+            }}
+            alt="Kunal S"
+            className="relative rounded-full object-cover border-4"
+            style={{
+              width: 200,
+              height: 200,
+              borderColor: 'rgba(255,255,255,0.1)',
+            }}
+            fetchPriority="high"
+          />
+      </div>
+
+      {/* Name */}
+      <h1
+        className="font-bold text-white text-center mb-1"
+        style={{
+          fontSize: 'clamp(2.5rem, 7vw, 5rem)',
+          letterSpacing: '0.05em',
+          fontFamily: 'Inter, sans-serif',
+          textShadow: '0 0 40px rgba(6,182,212,0.3)',
+        }}
+      >
+        KUNAL S
+      </h1>
+
+      {/* Title */}
+      <h2
+        className="text-cyan-400 tracking-widest font-bold mb-8"
+        style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.9rem', letterSpacing: '0.3em' }}
+      >
+        FULL STACK DEVELOPER
+      </h2>
+
+      {/* Bio terminal box */}
+      <div
+        className="relative mx-auto mb-6"
+        style={{
+          maxWidth: 520,
+          width: '90%',
+          background: 'rgba(10,10,15,0.75)',
+          border: '1px solid rgba(6,182,212,0.3)',
+          borderRadius: 8,
+          padding: '1rem 1.25rem',
+        }}
+      >
+        {/* Terminal header */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
+          <span
+            className="ml-2 text-gray-400 text-xs"
+            style={{ fontFamily: 'JetBrains Mono, monospace' }}
+          >
+            NEURAL_CORE // BIO_GENERATOR
+          </span>
+        </div>
+
+        <p
+          ref={bioRef}
+          className="text-gray-300 text-sm leading-relaxed"
+          style={{ fontFamily: 'JetBrains Mono, monospace', minHeight: 60 }}
+        >
+          <span className="text-cyan-400 mr-1">&gt;</span>
+          {isTyping ? (
+            <>
+              {displayedText}
+              <span className="inline-block w-0.5 h-4 bg-cyan-400 ml-0.5 animate-pulse" />
+            </>
+          ) : (
+            <span dangerouslySetInnerHTML={{ __html: displayedText }} />
+          )}
+        </p>
+      </div>
+
+      {/* Generate bio button */}
+      <button
+        onClick={generateNewBio}
+        disabled={isTyping}
+        className="group flex items-center gap-2 px-6 py-2.5 rounded-full transition-all mb-10"
+        style={{
+          background: 'rgba(6,182,212,0.1)',
+          border: '1px solid rgba(6,182,212,0.5)',
+          color: '#22d3ee',
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '0.7rem',
+          letterSpacing: '0.15em',
+          cursor: isTyping ? 'not-allowed' : 'pointer',
+          opacity: isTyping ? 0.6 : 1,
+        }}
+      >
+        <span style={{ fontSize: '0.9rem' }}>✦</span>
+        GENERATE NEW BIO
+      </button>
+
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-3 mb-10" style={{ maxWidth: 480, width: '90%' }}>
+        {[
+          { value: '1', label: 'YEARS EXP' },
+          { value: '80%', label: 'EFFICIENCY', color: '#22d3ee' },
+          { value: '7.8', label: 'CGPA', color: '#c084fc' },
+          { value: '5+', label: 'PROJECTS' },
+        ].map(({ value, label, color }) => (
+          <div
+            key={label}
+            className="flex flex-col items-center justify-center p-3 rounded-lg"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+          >
+            <span className="font-bold text-xl" style={{ color: color ?? '#fff', fontFamily: 'JetBrains Mono, monospace' }}>
+              {value}
+            </span>
+            <span className="text-gray-500 text-xs mt-1" style={{ letterSpacing: '0.1em', fontFamily: 'JetBrains Mono, monospace' }}>
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA buttons */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center">
+        <a
+          href="#projects"
+          onClick={(e) => {
+            e.preventDefault();
+            document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="px-6 py-2.5 rounded text-sm font-bold transition-all"
+          style={{
+            background: 'rgba(6,182,212,0.1)',
+            border: '1px solid rgba(6,182,212,0.5)',
+            color: '#22d3ee',
+            fontFamily: 'JetBrains Mono, monospace',
+            letterSpacing: '0.05em',
+          }}
+        >
+          VIEW MY WORK
+        </a>
+        <a
+          href="/kunal_resume.pdf"
+          target="_blank"
+          download="kunal_resume.pdf"
+          className="inline-flex items-center justify-center px-6 py-2.5 rounded text-sm font-bold transition-all hover:bg-cyan-400"
+          style={{
+            background: '#06b6d4',
+            color: '#000',
+            fontFamily: 'JetBrains Mono, monospace',
+            letterSpacing: '0.05em',
+          }}
+        >
+          DOWNLOAD CV
+        </a>
+      </div>
+
+      {/* Scroll indicator */}
+      <div
+        className="absolute bottom-8 left-1/2 text-gray-500 text-xs tracking-widest"
+        style={{ transform: 'translateX(-50%)', fontFamily: 'JetBrains Mono, monospace' }}
+      >
+        SCROLL ↓
+      </div>
+    </section>
+  );
+}
