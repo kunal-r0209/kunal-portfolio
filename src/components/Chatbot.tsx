@@ -10,12 +10,10 @@ interface Message {
 
 const SUGGESTIONS = [
   "🎯 Why hire Kunal?",
-  "📍 Where is she based?",
-  "🏗️ How she built TaskNerve",
+  "📍 Where is he based?",
+  "🏗️ How he built TaskNerve",
   "🏆 Hackathon wins"
 ];
-
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,69 +32,32 @@ export default function Chatbot() {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  const generateResponse = async (userMessage: string) => {
-    if (!GEMINI_API_KEY) {
-      return "⚠️ I'm missing my brain! (API Key not correctly configured). Please check VITE_GEMINI_API_KEY in .env file.";
-    }
-
+  // Calls our own /api/chat serverless function instead of the Gemini API
+  // directly, so the API key stays on the server and never reaches the browser.
+  const generateResponse = async (userMessage: string, priorMessages: Message[]) => {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+      // Skip the initial greeting (index 0) — Gemini's history must start
+      // with a 'user' turn, and that first message is from the assistant.
+      const history = priorMessages.slice(1).map((msg) => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }],
+      }));
+
+      const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are Hedgy, a friendly and professional AI assistant for Kunal S's portfolio. 
-              You represent Kunal, an Full Stack Developer.
-              
-              Context about Kunal S:
-              - Personal Background: 22-year-old Full Stack Java Developer from Puducherry, India.
-              - Software Developer at Info Way Solutions (Feb 2026 - Present):
-                - Developed production-grade full-stack applications using Spring Boot, React.js, PostgreSQL, and TypeScript.
-                - Built 25+ REST APIs, improving response times by 40% with Redis caching and query optimization.
-              - Frontend Developer Intern at Pursuit Future Technology (Sep 2025 - Dec 2025):
-                - Built responsive web applications using React.js, Node.js, and MongoDB.
-                - Automated CI/CD pipelines with Docker, Jenkins, GitHub Actions, and AWS, reducing deployment time by 87%.
-              - Technical Skills: Java, Spring Boot, React.js, TypeScript, Node.js, FastAPI, PostgreSQL, MongoDB, Redis, Docker, AWS, LangChain, RAG, FAISS, TensorFlow.js.
-              - Major Projects:
-                - PolicyPilotAI: AI-powered insurance chatbot using RAG, LangChain, FAISS, and Groq Llama 3.
-                - Fitflow: AI fitness platform with real-time pose estimation using TensorFlow.js, Mediapipe, and OpenCV.
-                - 10xCoders: Full-stack learning platform featuring AI career guidance and JWT authentication.
-              - Certifications:
-                - Capgemini Certified Java Full Stack Developer.
-                - Web Development Internship – Academor.
-                - Java Full Stack Development Foundation – Edusphere.
-              - Education: B.Tech in IT (CGPA 7.8).
-              - Personal & Hobbies: 
-                - Identity: A "Techie Boy" with a deep-rooted passion for nature and the outdoors.
-                - Adventure: An avid trekker and hiker who actively seeks out adventurous spots during her travels.
-                - History & Culture: Fascinated by historical landmarks and finds inspiration in exploring diverse global cultures.
-                - Creative: Enjoys playing the guitar, reading widely, and maintaining a high-energy, extroverted approach to collaboration.
-                - Disciplined: Committed to daily self-reflection via journaling and an evening walk every single day.
-                - Growth Mindset: Driven by a curiosity to learn and explore—whether through emerging technologies or new life experiences.
-                - Interests: Values storytelling in all its forms, particularly through movies, series, and anime.
-              - Travel: Global mindset. Spent 4 months immersive in Malaysia, exploring local nature, food, and culture (documented through Instagram logs).
-              - Life Philosophy: Kunal defines true success as the achievement of personal peace and happiness.
-              
-              Tone: Professional, warm, and data-driven. Highlight her balance of technical precision and adventurous spirit. Keep answers highly concise (under 3 sentences) unless asked for more detail.
-              
-              User Question: ${userMessage}`
-            }]
-          }]
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage, history }),
       });
 
       const data = await response.json();
 
-      if (data.error) {
-        throw new Error(data.error.message);
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Request failed');
       }
 
-      return data.candidates[0].content.parts[0].text;
+      return data.reply as string;
     } catch (error) {
-      console.error('Gemini API Error:', error);
+      console.error('Chat API Error:', error);
       return "Sorry, I'm having trouble connecting to my neural network right now. Please try again later!";
     }
   };
@@ -110,7 +71,7 @@ export default function Chatbot() {
     setInput('');
     setIsLoading(true);
 
-    const response = await generateResponse(cleanText);
+    const response = await generateResponse(cleanText, messages);
 
     setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     setIsLoading(false);
